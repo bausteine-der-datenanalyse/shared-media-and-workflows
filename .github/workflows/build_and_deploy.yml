@@ -1,23 +1,22 @@
-name: Reusable Build and Deploy
+name: Build and Deploy (Reusable)
 
 on:
   workflow_call:
     inputs:
-      python_version:
-        required: false
-        type: string
-        default: "3.12"
       quarto_profile:
         required: false
         type: string
         default: "full"
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
-    outputs:
-      setup_done: ${{ steps.set_output.outputs.setup_done }}
+
     steps:
+      ##############################
+      # 🛠️ Setup
+      ##############################
+
       - name: Update apt
         run: sudo apt update
 
@@ -30,7 +29,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: "3.12"
 
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
@@ -38,16 +37,9 @@ jobs:
           tinytex: true
           version: 1.6.42
 
-      - name: Mark setup complete
-        id: set_output
-        run: echo "setup_done=1" >> $GITHUB_OUTPUT
-
-  render:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      ##############################
+      # 🧮 Render
+      ##############################
 
       - name: Render with Quarto
         uses: quarto-dev/quarto-actions/render@v2
@@ -55,12 +47,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           QUARTO_PROFILE: ${{ inputs.quarto_profile }}
 
-  deploy:
-    needs: render
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      ##############################
+      # 🚀 Deploy
+      ##############################
 
       - name: Commit rendered output
         run: |
